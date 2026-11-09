@@ -39,7 +39,7 @@
     & $py scripts/09_evidence_perturb.py --seed 0
     & $py scripts/10_error_review.py --seed 0
 
-Test 只输出预测。证据扰动脚本先用 --limit 8 检查耗时。人工复核表里的判断列需要你阅读证据后填写。耗时实验请分开运行，避免多个程序争用显存。
+Test 只输出预测。Ablation 默认比较三档 QLoRA 秩；加 `-FullPrecisionGrid` 后也跑三档 BF16 LoRA。证据扰动脚本先用 --limit 8 检查耗时。人工复核表里的判断列需要你阅读证据后填写。耗时实验请分开运行，避免多个程序争用显存。
 
 需要从新结果重画 PNG 时，给该 Python 环境安装 matplotlib，再运行 scripts/12_plot_results.py。
 

@@ -1,0 +1,76 @@
+{
+  "c3": {
+    "seeds": [
+      {
+        "seed": 0,
+        "n": 150,
+        "correct": 97,
+        "accuracy": 0.6466666666666666,
+        "macro_f1": 0.6278304870335231
+      },
+      {
+        "seed": 1,
+        "n": 150,
+        "correct": 98,
+        "accuracy": 0.6533333333333333,
+        "macro_f1": 0.6339808054369288
+      },
+      {
+        "seed": 2,
+        "n": 150,
+        "correct": 97,
+        "accuracy": 0.6466666666666666,
+        "macro_f1": 0.6231070889894419
+      }
+    ],
+    "accuracy_mean": 0.6488888888888888,
+    "accuracy_sample_std": 0.00384900179459753,
+    "macro_f1_mean": 0.6283061271532979,
+    "macro_f1_sample_std": 0.005452440048981872
+  },
+  "c3_probability_ensemble": {
+    "n": 150,
+    "correct": 97,
+    "accuracy": 0.6466666666666666,
+    "macro_f1": 0.6278304870335231,
+    "delta_vs_seed0": {
+      "delta": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0,
+      "n": 150.0
+    }
+  },
+  "c3_common_errors": {
+    "total": 50,
+    "gold_nei": 35
+  },
+  "c4": {
+    "seeds": [
+      {
+        "seed": 0,
+        "n": 150,
+        "correct": 85,
+        "accuracy": 0.5666666666666667,
+        "macro_f1": 0.5215699180243902
+      },
+      {
+        "seed": 1,
+        "n": 150,
+        "correct": 92,
+        "accuracy": 0.6133333333333333,
+        "macro_f1": 0.5921830228860357
+      },
+      {
+        "seed": 2,
+        "n": 150,
+        "correct": 95,
+        "accuracy": 0.6333333333333333,
+        "macro_f1": 0.6116040619146209
+      }
+    ],
+    "accuracy_mean": 0.6044444444444445,
+    "accuracy_sample_std": 0.03421067626297922,
+    "macro_f1_mean": 0.5751190009416823,
+    "macro_f1_sample_std": 0.04738061207075867
+  }
+}

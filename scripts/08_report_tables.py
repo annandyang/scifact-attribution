@@ -25,8 +25,9 @@ from scifact_attr.utils.io import get_logger, load_jsonl_as_list
 LOG = get_logger("tables")
 ORDER = ["c0", "c1", "c2", "c3", "c4", "c5", "c3_prime"]
 ABLATION_ADAPTERS = {
-    "rank8": "lora_r16_r8_qlora", "c3": "lora_r16", "rank32": "lora_r16_r32_qlora",
-    **{f"bf16_r{rank}": f"lora_r16_r{rank}_bf16_lora" for rank in (8, 16, 32)},
+    "rank8": ("lora_r16_r8_qlora", 8), "c3": ("lora_r16", 16),
+    "rank32": ("lora_r16_r32_qlora", 32),
+    **{f"bf16_r{rank}": (f"lora_r16_r{rank}_bf16_lora", rank) for rank in (8, 16, 32)},
 }
 NAMES = {
     "c0": "closed book",
@@ -249,12 +250,14 @@ def main():
             raise SystemExit("Include the original C3 condition as the ablation reference.")
         for row in rows:
             condition, seed = row["condition"], row["seed"]
-            adapter = ABLATION_ADAPTERS[condition]
+            adapter, rank = ABLATION_ADAPTERS[condition]
             path = predictions.parent / "adapters" / f"{adapter}_s{seed}" / "train_meta.json"
             if not path.is_file():
                 raise SystemExit(f"Missing training metrics: {path}")
             meta = json.loads(path.read_text(encoding="utf-8"))
             if (meta.get("smoke_test") or meta.get("training_config") != cfg["reader"]["train"]
+                    or meta.get("lora") != {**cfg["reader"]["lora"], "r": rank}
+                    or meta.get("seed") != cfg["seed"] + seed
                     or meta.get("load_in_4bit") != (not condition.startswith("bf16_"))):
                 raise SystemExit(f"Incompatible training settings: {path}")
             if condition != "c3":

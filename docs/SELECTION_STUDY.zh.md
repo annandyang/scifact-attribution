@@ -18,12 +18,12 @@
 
 评估组有 26 条空证据；规则改变了 19 条预测，纠正 18 条、改错 1 条，净增 17 条（+11.3 个百分点，配对 95% 区间 +6.0 到 +17.3）。规则后的准确率为 58.7%，宏平均 F1 仍低于 C1，也没有补回丢掉的证据或提升 REFUTE 识别。这是看到原始结果后做的诊断，不能视为新的独立测试集成绩。
 
-可用缓存或真实推理复跑。以下命令在已经准备好 SciFact 数据的仓库根目录执行：
+可用缓存或真实推理复跑。按 [Windows 复跑说明](QUICKSTART.zh.md) 设置 Python 3.11 的 `$py`、准备 SciFact 数据，然后在仓库根目录执行：
 
 ```powershell
-python scripts/13_audit_selection.py
-python scripts/14_selection_study.py --empty-rule-only --out outputs/tables/e2_empty_rule
-python scripts/04_run_condition.py --condition c2 --split dev --require-evidence --out outputs/predictions/c2_guard_dev.jsonl
+& $py scripts/13_audit_selection.py
+& $py scripts/14_selection_study.py --empty-rule-only --out outputs/tables/e2_empty_rule
+& $py scripts/04_run_condition.py --condition c2 --split dev --require-evidence --out outputs/predictions/c2_guard_dev.jsonl
 ```
 
 ## 选句参数对照
@@ -31,13 +31,13 @@ python scripts/04_run_condition.py --condition c2 --split dev --require-evidence
 用同一批检索结果和同一个阅读模型，比较原规则、取消最低相关性分数（仍最多 4 句）、放宽到 8 句（每篇最多 4 句，并考虑摘要第 12 句以后的候选）和补邻句（保留原选句，再加同一摘要紧邻句，总计最多 8 句）。先在 150 条校准声明上比较宏平均 F1，然后只在另外 150 条上跑选中的方案和原规则。C2 与 C3 分开比较，避免把微调与选句的作用混在一起。
 
 ```powershell
-python scripts/14_selection_study.py --condition c2 --out outputs/tables/e2_selection_c2
-python scripts/14_selection_study.py --condition c3 --out outputs/tables/e2_selection_c3
+& $py scripts/14_selection_study.py --condition c2 --out outputs/tables/e2_selection_c2
+& $py scripts/14_selection_study.py --condition c3 --out outputs/tables/e2_selection_c3
 ```
 
 `wide8` 同时改了候选范围和两种句数上限，因此只能比较整套策略。仅凭它的结果不能判断是哪一个参数起了作用。
 
-原始 C2 用真实模型重跑，300 条标签与历史缓存完全一致。下面的选句方案在校准组比较，只有校准组宏平均 F1 最高的方案进入留出评估。
+原始 C2 用真实模型重跑，300 条标签与历史缓存完全一致。下面的选句方案在校准组比较，只有校准组宏平均 F1 最高的方案进入留出评估。这是原始结果已被查看后的复盘；该留出组不能当作新的独立测试集。
 
 | C2 选句方式 | 校准组准确率 | 校准组宏平均 F1 | 留出准确率 | 留出宏平均 F1 |
 |---|---:|---:|---:|---:|
@@ -46,7 +46,7 @@ python scripts/14_selection_study.py --condition c3 --out outputs/tables/e2_sele
 | 扩到 8 句 | 56.0% | 0.412 | — | — |
 | 原选句加邻句 | 50.7% | 0.377 | — | — |
 
-取消门槛在留出组比原 C2 多答对 14 条（+9.3 个百分点，配对 95% 区间 +3.3 到 +15.3），完整参考证据从 48/91 增至 52/91。取消门槛后，空上下文从 26 条降为 0，但其中也包含只给出低相关性句子的情况。它的留出准确率和宏平均 F1 都低于空证据规则，没有替换原配置。[C2 运行记录](../outputs/tables/e2_selection_c2.json)保存了校准组和留出组的指标。
+取消门槛在留出组比原 C2 多答对 14 条（+9.3 个百分点，配对 95% 区间 +3.3 到 +15.3），完整参考证据从 48/91 增至 52/91。取消门槛后，空上下文从 26 条降为 0，但其中也包含只给出低相关性句子的情况。空证据规则比取消门槛多答对 3 条，配对 95% 区间为 −2.0 到 +6.7 个百分点，差距还不确定。两种改动都单独记录，没有替换原配置。[C2 运行记录](../outputs/tables/e2_selection_c2.json)保存了校准组和留出组的指标。
 
 ![C2 选句和空证据规则的准确率与宏平均 F1](../outputs/figures/e2_selection_followup.png)
 
