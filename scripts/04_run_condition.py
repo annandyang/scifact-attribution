@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import gc
+from hashlib import file_digest
 import json
 import sys
 import time
@@ -25,19 +26,22 @@ LOG = get_logger("run")
 
 
 def build_retriever(cfg: Dict[str, Any], processed: Path, indexes: Path, mode: str,
-                    open_scope=None, exact_index=False):
+                    open_scope=None, exact_index=False, frozen_bm25=None):
     corpus_path = processed / "corpus.jsonl"
     corpus = DiskCorpus(corpus_path) if open_scope else {
         int(d["doc_id"]): d for d in load_jsonl_as_list(corpus_path)
     }
     tag = "open" if open_scope else "scifact"
-    bm25_path = indexes / f"bm25_{tag}.pkl"
-    if not bm25_path.exists():
-        raise SystemExit(f"BM25 index missing: {bm25_path}. Run scripts/02_build_index.py first.")
-
-    from scifact_attr.retrieval.bm25 import BM25Index
-
-    bm25 = BM25Retriever(BM25Index.load(bm25_path))
+    if frozen_bm25 is None:
+        from scifact_attr.retrieval.bm25 import BM25Index
+        bm25_path = indexes / f"bm25_{tag}.pkl"
+        if not bm25_path.exists():
+            raise SystemExit(f"BM25 index missing: {bm25_path}. Run scripts/02_build_index.py first.")
+        bm25 = BM25Retriever(BM25Index.load(bm25_path))
+    else:
+        if any(hit["doc_id"] not in corpus for hits in frozen_bm25.by_query.values() for hit in hits):
+            raise ValueError("Some frozen BM25 documents do not exist in the requested corpus")
+        bm25 = frozen_bm25
 
     if mode == "bm25":
         return bm25, corpus
@@ -75,6 +79,8 @@ def main() -> int:
     parser.add_argument("--split", default="dev", choices=["dev", "test", "train", "open"])
     parser.add_argument("--open-scope", default="full", choices=SCOPES)
     parser.add_argument("--exact-index", action="store_true", help="use exact search for SciFact-Open")
+    parser.add_argument("--frozen-bm25", type=Path,
+                        help="exact, precomputed BM25 rankings for the full Open hybrid experiment")
     parser.add_argument("--retriever", default=None, choices=["bm25", "hybrid", "rerank"])
     parser.add_argument("--seeds", default=None, help="comma separated; overrides the config")
     parser.add_argument("--limit", type=int, default=0)
@@ -133,12 +139,25 @@ def main() -> int:
     if len(set(seeds)) != len(seeds) or any(seed < 0 for seed in seeds):
         parser.error("--seeds must contain distinct nonnegative seeds")
     mode = args.retriever or ("bm25" if args.dry_run else cfg["retrieval"]["mode"])
+    frozen_bm25 = frozen_hash = None
+    if args.frozen_bm25:
+        if (open_scope != "full" or mode != "hybrid" or args.dry_run or args.limit
+                or not cfg["components"].get("retrieval")):
+            parser.error("--frozen-bm25 requires full Open hybrid retrieval on all claims")
+        from scifact_attr.retrieval.bm25 import FrozenBM25
+        depth = max(cfg["retrieval"]["fuse"]["top_k"], cfg["retrieval"]["top_k_abstracts"])
+        ranked = load_jsonl_as_list(args.frozen_bm25)
+        frozen_bm25 = FrozenBM25(claims, ranked, depth)
+        if any(len(hits) != depth for hits in frozen_bm25.by_query.values()):
+            parser.error(f"--frozen-bm25 needs all {depth} sparse candidates for every query")
+        with args.frozen_bm25.open("rb") as source:
+            frozen_hash = file_digest(source, "sha256").hexdigest()
 
     retriever = None
     corpus: Dict[int, Dict[str, Any]] = {}
     if cfg["components"].get("retrieval"):
         retriever, corpus = build_retriever(cfg, processed, indexes, mode, open_scope,
-                                           args.exact_index)
+                                           args.exact_index, frozen_bm25=frozen_bm25)
 
     sentence_limit = int(cfg["corpus"]["max_sentences"])
     sentences_by_doc = {}
@@ -172,6 +191,7 @@ def main() -> int:
 
     started = time.perf_counter()
     rows = []
+    adapter_hashes = {}
     smoke = args.dry_run or args.limit > 0 or args.smoke_adapter
     for seed in seeds:
         set_seed(int(cfg.get("seed", 42)) + seed, with_torch=not args.dry_run)
@@ -180,6 +200,11 @@ def main() -> int:
             path = adapter_dir(cfg, seed, smoke=args.smoke_adapter) if cfg["components"].get("adapter") else None
             if path and not (path / "adapter_config.json").is_file():
                 raise SystemExit(f"Adapter missing: {path}. Train seed {seed} with script 05 first.")
+            if path and args.adapter_base:
+                weights = path / "adapter_model.safetensors"
+                if weights.is_file():
+                    with weights.open("rb") as source:
+                        adapter_hashes[str(seed)] = file_digest(source, "sha256").hexdigest()
             reader = Reader(cfg["reader"]["model"], quant=cfg["reader"]["quant"],
                             adapter_path=str(path) if path else None,
                             revision=cfg["reader"].get("revision"))
@@ -202,6 +227,10 @@ def main() -> int:
         predictions = predictions / "smoke"
     out = Path(args.out) if args.out else predictions / name
     n = write_jsonl(out, rows)
+    output_hash = None
+    if args.adapter_base:
+        with out.open("rb") as source:
+            output_hash = file_digest(source, "sha256").hexdigest()
 
     meta = {
         "condition": cfg["condition"],
@@ -222,7 +251,10 @@ def main() -> int:
         "wall_clock_s": round(elapsed, 1),
         "sec_per_claim": round(elapsed / max(n, 1), 2),
         "components": cfg["components"],
-        **({"reader_precision": args.precision} if args.adapter_base else {}),
+        **({"frozen_bm25_sha256": frozen_hash} if frozen_hash else {}),
+        **({"reader_precision": args.precision, "adapter_base_name": Path(args.adapter_base).name,
+            "adapter_sha256_by_seed": adapter_hashes, "predictions_sha256": output_hash}
+           if args.adapter_base else {}),
         **({"require_evidence": True} if args.require_evidence else {}),
     }
     with open(out.with_suffix(".meta.json"), "w", encoding="utf-8") as fh:

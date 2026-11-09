@@ -37,6 +37,21 @@ python scripts/14_selection_study.py --condition c3 --out outputs/tables/e2_sele
 
 `wide8` 同时改了候选范围和两种句数上限，因此只能比较整套策略。仅凭它的结果不能判断是哪一个参数起了作用。
 
+原始 C2 用真实模型重跑，300 条标签与历史缓存完全一致。下面的选句方案在校准组比较，只有校准组宏平均 F1 最高的方案进入留出评估。
+
+| C2 选句方式 | 校准组准确率 | 校准组宏平均 F1 | 留出准确率 | 留出宏平均 F1 |
+|---|---:|---:|---:|---:|
+| 原规则 | 52.7% | 0.391 | 47.3% | 0.347 |
+| 取消最低分门槛 | 60.7% | 0.454 | 56.7% | 0.421 |
+| 扩到 8 句 | 56.0% | 0.412 | — | — |
+| 原选句加邻句 | 50.7% | 0.377 | — | — |
+
+取消门槛在留出组比原 C2 多答对 14 条（+9.3 个百分点，配对 95% 区间 +3.3 到 +15.3），完整参考证据从 48/91 增至 52/91。取消门槛后，空上下文从 26 条降为 0，但其中也包含只给出低相关性句子的情况。它的留出准确率和宏平均 F1 都低于空证据规则，没有替换原配置。[C2 运行记录](../outputs/tables/e2_selection_c2.json)保存了校准组和留出组的指标。
+
+![C2 选句和空证据规则的准确率与宏平均 F1](../outputs/figures/e2_selection_followup.png)
+
+C3 微调模型在校准组选择了 `wide8`（宏平均 F1：0.589，原规则 0.561）。留出组完整参考证据从 48/91 增至 62/91，但两组都答对 97/150（64.7%，配对差值 95% 区间 −3.3 到 +3.3 个百分点）。宏平均 F1 从 0.628 变为 0.623。没有足够证据说明这个改动能提高判定能力，C3 仍保留原配置。[C3 运行记录](../outputs/tables/e2_selection_c3.json)
+
 ## 英文报告表述
 
 On the held-out SciFact development subset, replacing retrieved abstract excerpts with up to four selected sentences reduced accuracy from 56.0% to 47.3%. Document rankings were identical. Among the 91 claims with annotated evidence, the abstract condition presented at least one complete annotated evidence set for 81 claims; sentence selection reduced this number to 48. Some predictions remained incorrect even when a complete set was preserved, so the difference also reflects how the reader uses the available context.

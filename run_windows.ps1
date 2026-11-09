@@ -57,8 +57,15 @@ try {
         return
     }
     if ($Stage -eq "Ablation") {
-        if (-not (Test-Path 'outputs/predictions/c3_dev.jsonl')) {
+        $c3 = 'outputs/predictions/c3_dev'
+        if (-not (Test-Path "$c3.jsonl") -or -not (Test-Path "$c3.meta.json")) {
             throw "Run the Dev stage with matching seeds before Ablation."
+        }
+        $baseline = Get-Content "$c3.meta.json" -Raw | ConvertFrom-Json
+        $baselineSeeds = ($baseline.seeds | Sort-Object) -join ','
+        $requestedSeeds = (($Seeds -split ',' | ForEach-Object { [int]$_ }) | Sort-Object) -join ','
+        if ($baselineSeeds -ne $requestedSeeds -or $baseline.limit -ne 0 -or $baseline.dry_run -or $baseline.smoke_adapter) {
+            throw "Ablation needs full C3 predictions with the same seeds. Found: $baselineSeeds."
         }
         foreach ($rank in 8,32) {
             Run scripts/05_train_lora.py --condition c3 --rank $rank --seeds $Seeds

@@ -1,4 +1,5 @@
 import csv
+import json
 import math
 from pathlib import Path
 
@@ -72,6 +73,40 @@ def gate():
     plt.close(fig)
 
 
+def selection():
+    files = [root / "tables" / f"e2_{name}.json" for name in ("selection_c2", "empty_rule")]
+    if not all(path.is_file() for path in files):
+        return
+    study, rule = [json.loads(path.read_text(encoding="utf-8")) for path in files]
+    results = study["evaluation"]
+    reports = [results["c1_reference"], results["original"]]
+    labels = ["C1: abstract excerpts", "C2: original selection"]
+    colors = ["#405463", "#C26638"]
+    if study["chosen_policy"] != "original":
+        policy = study["chosen_policy"]
+        reports.append(results[policy])
+        labels.append("C2: " + {"no_threshold": "remove score cutoff", "wide8": "wider selection",
+                                "neighbors8": "include neighboring sentences"}[policy])
+        colors.append("#3872B1")
+    reports.append(rule["evaluation"]["empty_rule"])
+    labels.append("C2: empty context → NEI")
+    colors.append("#168274")
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.5), sharey=True, layout="constrained")
+    for ax, metric, title in zip(axes, ("accuracy", "macro_f1"), ("Accuracy", "Macro F1"), strict=True):
+        values = [report[metric] for report in reports]
+        bars = ax.barh(labels, values, color=colors, height=.52)
+        ax.bar_label(bars, labels=[f"{value:.1%}" if metric == "accuracy" else f"{value:.3f}"
+                                   for value in values], padding=5)
+        ax.set(xlim=(0, 1), title=title)
+        ax.grid(axis="x", alpha=.22)
+    axes[0].invert_yaxis()
+    axes[0].xaxis.set_major_formatter(PercentFormatter(1))
+    fig.suptitle("Sentence selection and the empty-context rule · 150 held-out SciFact claims")
+    fig.savefig(root / "figures" / "e2_selection_followup.png", dpi=200)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     retrieval()
     gate()
+    selection()

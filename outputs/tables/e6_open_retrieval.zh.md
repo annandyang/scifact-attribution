@@ -17,6 +17,7 @@
 - 官方下载归档为 287,369,773 字节，SHA-256 为 `8f4dc238b2eff422bab5c7918fcbddb6996b29d37cb887942ef6ee1a16fb3415`。完整读取通过 gzip 校验。 [官方数据下载脚本](https://github.com/dwadden/scifact-open/blob/main/script/get_data.sh)
 - `scripts/11_scifact_open.py prepare` 的 `candidates` 和 `full` 模式均处理了 279 条与原始测试集 ID 和文本匹配的声明。两种模式生成的声明文件 SHA-256 相同，为 `827c336f2a1b78465204102366988061186e3c94c4aac41e2c637b1de3ff133f`。其中 101 条支持、90 条反驳、73 条没有标注证据、15 条有相互冲突的证据。冲突声明计入检索实验。
 - 候选库的 BM25 索引由 `scripts/02_build_index.py --corpus open --open-scope candidates --retriever all --device cpu` 构建，耗时 2.3 秒。索引 `bm25_open.pkl` 的 SHA-256 为 `b54f1c9f3953f178fc6456860c143229d9c53e36253a37bbbfc4d96606a99c57`。
+- 同一命令在 CPU 上用 `BAAI/bge-small-en-v1.5`（版本 `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`）构建候选库的稠密索引，耗时约 34 分钟。重新加载后验证了全部 12,236 个 384 维归一化向量，文档 ID 顺序与语料及 BM25 索引一致。`dense_open.npy` 的 SHA-256 为 `f469339648cc73f0aa66080047259031b0c3361620ea7ae8768156b66b6f544d`，ID 文件的 SHA-256 为 `b62dd2e71ddd04e2cf2865dfbc339c974683269b7bcedc53925658cd7f5d0f80`。
 - 全库检索诊断只为这批固定查询的词项把倒排列表写入磁盘，使用全库的文档频次和平均文档长度，沿用标准索引的 BM25 公式。在候选库上核对 206 条查询、小库上核对 279 条查询，完整分数向量均逐项一致。全库默认诊断用时 74 秒，峰值进程内存为 106 MiB，临时倒排文件约 167 MB。另一次为全部 279 条声明生成排序，用时 87 秒，复现了相同的命中率和召回率。
 
 ## 复跑

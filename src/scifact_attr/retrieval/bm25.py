@@ -124,3 +124,39 @@ class BM25Index:
 
 def build(docs: Sequence[Tuple[str, str]], k1: float = 0.9, b: float = 0.4) -> BM25Index:
     return BM25Index(k1=k1, b=b).fit(docs)
+
+
+class FrozenBM25:
+    """Exact BM25 rankings saved for a fixed set of benchmark queries."""
+
+    name = "bm25"
+
+    def __init__(self, claims, rows, depth):
+        expected = {str(row["claim_id"]): row["claim"] for row in claims}
+        found = set()
+        self.depth = depth
+        self.by_query = {}
+        for row in rows:
+            key = str(row["claim_id"])
+            query = row["claim"]
+            if key in found or expected.get(key) != query:
+                raise ValueError(f"Unknown, duplicate or mismatched ranking for claim {key}")
+            ranking = row["results"]
+            ids = [item["doc_id"] for item in ranking]
+            scores = [item["score"] for item in ranking]
+            if (len(ranking) > depth or len(set(ids)) != len(ids)
+                    or any(type(doc_id) is not int for doc_id in ids)
+                    or any(not math.isfinite(score) or score <= 0 for score in scores)
+                    or scores != sorted(scores, reverse=True)):
+                raise ValueError(f"Invalid BM25 ranking for claim {key}")
+            if query in self.by_query and self.by_query[query] != ranking:
+                raise ValueError(f"Identical query text has different results for claim {key}")
+            self.by_query[query] = ranking
+            found.add(key)
+        if found != set(expected):
+            raise ValueError("Rankings do not cover every matched claim")
+
+    def search(self, query, top_k):
+        if not 0 <= top_k <= self.depth:
+            raise ValueError(f"Requested top {top_k} exceeds frozen ranking depth {self.depth}")
+        return self.by_query[query][:top_k]

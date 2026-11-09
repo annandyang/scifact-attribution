@@ -71,8 +71,11 @@ def main():
     parser.add_argument("--corpus", required=True, type=Path, help="prepared corpus.jsonl")
     parser.add_argument("--reference-index", type=Path, help="compare every score with a local BM25 pickle")
     parser.add_argument("--rankings-dir", type=Path, help="also save local top-k rankings for all claims")
+    parser.add_argument("--ranking-depth", type=int, help="saved ranking length, independent of metrics")
     parser.add_argument("--out", required=True, type=Path, help="aggregate JSON output")
     args = parser.parse_args()
+    if args.ranking_depth is not None and (not args.rankings_dir or args.ranking_depth < 1):
+        parser.error("--ranking-depth requires --rankings-dir and a positive length")
 
     all_claims = list(read_jsonl(args.claims))
     evidence_claims = [row for row in all_claims if row["gold_doc_ids"]]
@@ -82,6 +85,7 @@ def main():
     config = load_base()["retrieval"]
     k1, b = config["bm25"]["k1"], config["bm25"]["b"]
     top_k = config["top_k_abstracts"]
+    ranking_depth = args.ranking_depth or top_k
     args.out.parent.mkdir(parents=True, exist_ok=True)
     started = perf_counter()
     hits, recalls, rankings = [], [], []
@@ -94,7 +98,7 @@ def main():
             query = row["claim"]
             if reference is not None and not np.array_equal(index.get_scores(query), reference.get_scores(query)):
                 parser.error(f"reference BM25 scores differ for claim {row['claim_id']}")
-            results = index.search(query, top_k=top_k)
+            results = index.search(query, top_k=ranking_depth)
             if args.rankings_dir:
                 rankings.append({
                     "claim_id": row["claim_id"],
@@ -103,7 +107,8 @@ def main():
                 })
             gold = set(map(str, row["gold_doc_ids"]))
             if gold:
-                overlap = gold.intersection(doc_id for doc_id, _ in results)
+                metric_results = results if ranking_depth == top_k else index.search(query, top_k=top_k)
+                overlap = gold.intersection(doc_id for doc_id, _ in metric_results)
                 hits.append(bool(overlap))
                 recalls.append(len(overlap) / len(gold))
         posting_bytes = sum(path.stat().st_size for path in Path(temp).iterdir())
@@ -115,6 +120,7 @@ def main():
         "n_docs": len(index.doc_ids),
         "n_evidence_claims": len(evidence_claims),
         "n_ranked_claims": len(rankings),
+        "ranking_depth": ranking_depth if rankings else None,
         "reference_score_parity_verified": reference is not None,
         "bm25": {"k1": k1, "b": b},
         "top_k": top_k,

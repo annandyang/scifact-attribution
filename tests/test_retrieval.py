@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from scifact_attr.retrieval.bm25 import BM25Index, tokenize
+from scifact_attr.retrieval.bm25 import BM25Index, FrozenBM25, tokenize
 from scifact_attr.retrieval.evaluate import ndcg_at_k, recall_at_k
 from scifact_attr.retrieval.fuse import rrf
 
@@ -70,6 +70,18 @@ class TestBM25(unittest.TestCase):
             self.index.save(path)
             loaded = BM25Index.load(path)
             self.assertEqual(loaded.search("epsilon", 3), self.index.search("epsilon", 3))
+
+    def test_frozen_rankings_match_queries_and_cannot_serve_a_deeper_search(self):
+        claims = [{"claim_id": "1", "claim": "beta"}]
+        hits = [{"doc_id": int(doc_id), "score": score}
+                for doc_id, score in self.index.search("beta", top_k=2)]
+        ranking = {"claim_id": "1", "claim": "beta", "results": hits}
+        fixed = FrozenBM25(claims, [ranking], depth=2)
+        self.assertEqual(fixed.search("beta", top_k=1), hits[:1])
+        with self.assertRaisesRegex(ValueError, "depth"):
+            fixed.search("beta", top_k=3)
+        with self.assertRaisesRegex(ValueError, "mismatched"):
+            FrozenBM25(claims, [{**ranking, "claim": "gamma"}], depth=2)
 
 
 class TestRetrievalMetrics(unittest.TestCase):

@@ -3,7 +3,6 @@
 import argparse
 from hashlib import file_digest
 import json
-import math
 from pathlib import Path
 import sys
 
@@ -14,39 +13,10 @@ from scifact_attr.eval.bootstrap import paired_delta_ci
 from scifact_attr.eval.metrics import accuracy, macro_f1
 from scifact_attr.open_data import DiskSentences
 from scifact_attr.reader.infer import Reader
+from scifact_attr.retrieval.bm25 import FrozenBM25
 from scifact_attr.selection.selector import CrossEncoderSelector
 from scifact_attr.system import RunContext, run_condition
 from scifact_attr.utils.io import load_jsonl_as_list, read_jsonl, set_seed, write_jsonl
-
-
-class FrozenBM25:
-    name = "bm25"
-
-    def __init__(self, claims, rows, k):
-        expected = {str(row["claim_id"]): row["claim"] for row in claims}
-        found = set()
-        self.by_query = {}
-        for row in rows:
-            key = str(row["claim_id"])
-            if key in found or expected.get(key) != row["claim"]:
-                raise ValueError(f"Unknown, duplicate or mismatched ranking for claim {key}")
-            ranking = row["results"]
-            ids = [item["doc_id"] for item in ranking]
-            scores = [item["score"] for item in ranking]
-            if (len(ranking) > k or len(set(ids)) != len(ids)
-                    or any(type(doc_id) is not int for doc_id in ids)
-                    or any(not math.isfinite(score) or score <= 0 for score in scores)
-                    or scores != sorted(scores, reverse=True)):
-                raise ValueError(f"Invalid BM25 ranking for claim {key}")
-            if row["claim"] in self.by_query and self.by_query[row["claim"]] != ranking:
-                raise ValueError(f"Identical query text has different results for claim {key}")
-            self.by_query[row["claim"]] = ranking
-            found.add(key)
-        if found != set(expected):
-            raise ValueError("Rankings do not cover every matched Open claim")
-
-    def search(self, query, top_k):
-        return self.by_query[query][:top_k]
 
 
 def build_context(claims, rankings, corpus_path, cfg, selector):

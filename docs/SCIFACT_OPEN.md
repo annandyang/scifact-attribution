@@ -42,3 +42,20 @@ commands for preparation and scoring, and `--open-scope candidates` to scripts 0
 and 04 when using Open. This uses the released candidate pool and exact dense search.
 Skip the IVF-PQ overlap check in this mode. The scope is recorded separately in the
 index, prediction and result paths.
+
+On a machine with limited RAM, build only the full dense index with
+`scripts/02_build_index.py --corpus open --retriever dense --device cuda`.
+Use script 15 to precompute exact BM25 results for the 279 fixed queries instead of
+building a general-purpose Python BM25 index:
+
+```powershell
+$open = 'data/processed/open/full'
+& $py scripts/15_open_bm25_check.py --scope full --claims "$open/claims_open.jsonl" `
+    --corpus "$open/corpus.jsonl" --out "$open/bm25_check.json" `
+    --ranking-depth 100 --rankings-dir "$open/rankings"
+```
+
+For each full Open hybrid inference run with retrieval enabled, pass
+`--frozen-bm25 "$open/rankings/bm25_full.jsonl"` to script 04. The ranking depth must
+match the hybrid candidate depth in the config. C0 does not use this argument.
+The frozen ranking file contains only these benchmark queries and cannot be used for new queries.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-from hashlib import sha256
+from hashlib import file_digest, sha256
 import json
 from math import isfinite
 from pathlib import Path
@@ -245,15 +245,36 @@ def main():
             raise SystemExit("Every adapter comparison needs the complete held-out evaluation split.")
         if len({frozenset(runs) for runs in loaded.values()}) != 1:
             raise SystemExit("Adapter comparisons require the same seeds for every rank.")
+        if "c3" not in loaded:
+            raise SystemExit("Include the original C3 condition as the ablation reference.")
         for row in rows:
-            adapter = ABLATION_ADAPTERS[row["condition"]]
-            path = predictions.parent / "adapters" / f"{adapter}_s{row['seed']}" / "train_meta.json"
+            condition, seed = row["condition"], row["seed"]
+            adapter = ABLATION_ADAPTERS[condition]
+            path = predictions.parent / "adapters" / f"{adapter}_s{seed}" / "train_meta.json"
             if not path.is_file():
                 raise SystemExit(f"Missing training metrics: {path}")
             meta = json.loads(path.read_text(encoding="utf-8"))
             if (meta.get("smoke_test") or meta.get("training_config") != cfg["reader"]["train"]
-                    or meta.get("load_in_4bit") != (not row["condition"].startswith("bf16_"))):
+                    or meta.get("load_in_4bit") != (not condition.startswith("bf16_"))):
                 raise SystemExit(f"Incompatible training settings: {path}")
+            if condition != "c3":
+                prediction_meta = predictions / f"{condition}_dev.meta.json"
+                if not prediction_meta.is_file():
+                    raise SystemExit(f"Missing inference metadata: {prediction_meta}")
+                inference = json.loads(prediction_meta.read_text(encoding="utf-8"))
+                precision = "bf16_lora" if condition.startswith("bf16_") else "qlora"
+                with path.with_name("adapter_model.safetensors").open("rb") as weights:
+                    weight_hash = file_digest(weights, "sha256").hexdigest()
+                with (predictions / f"{condition}_dev.jsonl").open("rb") as cache:
+                    cache_hash = file_digest(cache, "sha256").hexdigest()
+                if (inference.get("reader_precision") != precision or inference.get("adapter_base_name") != adapter
+                        or inference.get("adapter_sha256_by_seed", {}).get(str(seed)) != weight_hash
+                        or inference.get("predictions_sha256") != cache_hash):
+                    raise SystemExit(f"Rerun inference with the matching adapter and precision: {prediction_meta}")
+                for cid in shared:
+                    reference, alternative = loaded["c3"][seed][cid], loaded[condition][seed][cid]
+                    if any(reference[key] != alternative[key] for key in ("retrieved_ids", "selected_ids")):
+                        raise SystemExit(f"Retrieval or selection changed for {condition} seed {seed}, claim {cid}.")
             row["training_seconds"] = meta.get("metrics", {}).get("train_runtime")
             row["training_peak_gib"] = meta.get("peak_mem_gb")
     comparisons = compare_runs(loaded, shared, args.resamples)
