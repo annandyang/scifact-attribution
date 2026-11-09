@@ -1,0 +1,87 @@
+# Base configuration. Condition files merge on top of this.
+# Every key here is a decision that is frozen before the test split is evaluated.
+
+seed: 42
+
+paths:
+  raw: data/raw/scifact
+  raw_open: data/raw/scifact_open
+  processed: data/processed
+  indexes: data/indexes
+  predictions: outputs/predictions
+  tables: outputs/tables
+  figures: outputs/figures
+
+corpus:
+  max_sentences: 12          # abstracts truncated to 12 sentences
+  max_tokens: 256
+
+retrieval:
+  mode: hybrid               # bm25 | hybrid | rerank; overridable with --retriever
+  bm25:
+    k1: 0.9                  # BEIR / Lucene convention, not the textbook 1.2
+    b: 0.4
+  dense:
+    model: BAAI/bge-small-en-v1.5
+    revision: 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a
+    dim: 384
+    batch_size: 64
+    index: exact             # exact is fine at 5,183 docs; open-domain uses ivf_pq
+    ivfpq:
+      nlist: 4096
+      m: 48
+      nbits: 8
+  fuse:
+    method: rrf
+    k: 60
+    top_k: 100
+  rerank:
+    model: BAAI/bge-reranker-base
+    revision: 2cfc18c9415c912f9d8155881c133215df768a70
+    top_n: 50
+  top_k_abstracts: 8         # the k in C1..C5; fixed by the E1 study, then frozen
+
+selection:
+  top_sentences: 4
+  max_per_abstract: 2
+  min_score: 0.30
+  untrained: true            # selector is a zero-shot cross-encoder, never fitted on SciFact claims
+
+reader:
+  model: Qwen/Qwen2.5-1.5B-Instruct
+  revision: 989aa7980e4cf806f80c7fef2b1adb7bc71aa306
+  quant:
+    load_in_4bit: true
+    quant_type: nf4
+    double_quant: true
+    compute_dtype: bfloat16
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+  train:
+    epochs: 3
+    lr: 0.0002
+    batch_size: 1
+    grad_accum: 8
+    gradient_checkpointing: true
+    max_seq_len: 1536
+    warmup_ratio: 0.03
+    grad_clip: 1.0
+  gen:
+    max_new_tokens: 56
+    batch_size: 12
+    do_sample: false
+    temperature: 0.0
+
+gate:
+  alphas: [0.10, 0.20, 0.30]
+  apply_alpha: 0.10            # the alpha whose threshold the prediction rows carry
+  calibration_split: dev
+
+evaluation:
+  label_metrics_split: dev     # held-out half; official test has no public labels
+  evidence_metrics_split: dev    # SciFact releases rationales for train/dev only
+  bootstrap_resamples: 10000
+  confidence: 0.95

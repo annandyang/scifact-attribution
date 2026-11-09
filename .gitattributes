@@ -1,0 +1,7 @@
+# Normalise line endings so the repository behaves the same on Windows and Linux.
+* text=auto eol=lf
+*.pkl binary
+*.npy binary
+*.png binary
+*.pdf binary
+outputs/predictions/*.jsonl -text

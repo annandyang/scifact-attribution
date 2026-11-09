@@ -1,0 +1,26 @@
+{
+  "condition": "c1",
+  "condition_name": "retrieval_full_abstracts",
+  "split": "test",
+  "open_scope": null,
+  "open_dense_index": null,
+  "seeds": [
+    0
+  ],
+  "retriever": "hybrid",
+  "n_rows": 300,
+  "dry_run": false,
+  "smoke_adapter": false,
+  "limit": 0,
+  "reader_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "reasoning_protocol": null,
+  "wall_clock_s": 211.0,
+  "sec_per_claim": 0.7,
+  "components": {
+    "retrieval": true,
+    "selection": false,
+    "adapter": false,
+    "reasoning": false,
+    "gate": "none"
+  }
+}

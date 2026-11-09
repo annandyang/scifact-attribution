@@ -1,0 +1,69 @@
+# The six-condition ladder, in one file so that the differences are visible at a glance.
+# Each condition switches on exactly one component relative to the previous rung.
+# `attribution` records which comparison this rung is meant to support; it is the reason
+# the ladder exists and it is what the report's table must be able to answer.
+
+conditions:
+
+  c0:
+    name: closed_book
+    components: {retrieval: false, selection: false, adapter: false, reasoning: false, gate: none}
+    prompt: closed_book
+    attribution: "absolute floor: what the reader knows without any literature"
+    seeds: [0]
+
+  c1:
+    name: retrieval_full_abstracts
+    components: {retrieval: true, selection: false, adapter: false, reasoning: false, gate: none}
+    prompt: grounded_label_only
+    attribution: "C1 minus C0 = value of grounding"
+    seeds: [0]
+
+  c2:
+    name: plus_evidence_selection
+    components: {retrieval: true, selection: true, adapter: false, reasoning: false, gate: none}
+    prompt: grounded_label_only
+    attribution: "C2 minus C1 = value of sentence-level selection"
+    seeds: [0]
+
+  c3:
+    name: plus_lora
+    components: {retrieval: true, selection: true, adapter: true, reasoning: false, gate: none}
+    prompt: grounded_label_only
+    adapter_path: outputs/adapters/lora_r16
+    attribution: "C3 minus C2 = value of adaptation on 809 claims"
+    seeds: [0, 1, 2]
+
+  c4:
+    name: plus_cot
+    components: {retrieval: true, selection: true, adapter: true, reasoning: true, gate: none}
+    prompt: cot_with_citations
+    adapter_path: outputs/adapters/lora_r16
+    attribution: "C4 minus C3 = value of explicit reasoning"
+    seeds: [0, 1, 2]
+
+  c5:
+    name: plus_conformal_gate
+    components: {retrieval: true, selection: true, adapter: true, reasoning: true, gate: conformal}
+    prompt: cot_with_citations
+    adapter_path: outputs/adapters/lora_r16
+    attribution: "C5 minus C4 = value of calibrated abstention (coverage, not accuracy)"
+    seeds: [0, 1, 2]
+
+# The control condition for the shortcut audit. Identical to C3 except that NEI training
+# examples are given retrieved-but-irrelevant evidence, so emptiness stops being diagnostic.
+control:
+  c3_prime:
+    name: plus_lora_shortcut_controlled
+    components: {retrieval: true, selection: true, adapter: true, reasoning: false, gate: none}
+    prompt: grounded_label_only
+    train:
+      neutralise_nei_cue: true
+    adapter_path: outputs/adapters/lora_r16_neutral
+    attribution: "C3 minus C3' = size of the empty-evidence shortcut"
+    seeds: [0]
+
+# Ablation grid for E7. Rank and training precision, everything else held constant.
+ablation:
+  ranks: [8, 16, 32]
+  precisions: [qlora, bf16_lora]

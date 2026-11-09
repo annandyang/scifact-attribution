@@ -1,0 +1,38 @@
+# data and artefacts are not committed: they are reproducible, and large
+data/raw/*
+data/processed/*
+data/indexes/*
+outputs/predictions/*
+outputs/figures/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/indexes/.gitkeep
+!outputs/predictions/.gitkeep
+!outputs/figures/.gitkeep
+
+# keep the metric tables: they are small and they are the audit trail
+!outputs/tables/*.csv
+!outputs/tables/*.md
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+.cache/
+venv/
+.ipynb_checkpoints/
+
+# tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+Thumbs.db
+
+# adapter weights are regenerated per seed; the config that produced them is committed
+outputs/adapters/*
+!outputs/adapters/.gitkeep

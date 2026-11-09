@@ -1,0 +1,26 @@
+{
+  "condition": "c3_prime",
+  "condition_name": "plus_lora_shortcut_controlled",
+  "split": "dev",
+  "open_scope": null,
+  "open_dense_index": null,
+  "seeds": [
+    0
+  ],
+  "retriever": "hybrid",
+  "n_rows": 300,
+  "dry_run": false,
+  "smoke_adapter": false,
+  "limit": 0,
+  "reader_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "reasoning_protocol": null,
+  "wall_clock_s": 190.4,
+  "sec_per_claim": 0.63,
+  "components": {
+    "retrieval": true,
+    "selection": true,
+    "adapter": true,
+    "reasoning": false,
+    "gate": "none"
+  }
+}

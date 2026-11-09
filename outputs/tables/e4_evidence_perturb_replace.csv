@@ -1,0 +1,2 @@
+seed,intervention,n_held_out,n_matched,n_comparable_labels,cited_flip_rate,uncited_flip_rate,flip_rate_delta,c4_accuracy,label_first_accuracy,label_first_accuracy_delta,label_first_n_assessed,label_first_assessment_ok_rate,label_first_assessment_citation_rate,cited_assessment_ok_rate,cited_assessment_citation_rate,uncited_assessment_ok_rate,uncited_assessment_citation_rate
+0,replace,150,80,80,0.25,0.1125,0.1375,0.5666666666666667,0.6466666666666666,0.07999999999999996,124,1.0,0.9596774193548387,1.0,0.85,1.0,0.95

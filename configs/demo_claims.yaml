@@ -1,0 +1,5 @@
+# Optional dev claim IDs. Keep the list empty to choose from cached predictions.
+# Claim A: C0 says SUPPORT, C3 correctly says REFUTE and selects a gold sentence.
+# Claim B: C0 gives a confident wrong label on NEI and C5 abstains.
+# If a case is missing, the viewer labels the replacement as another case.
+claims: []
