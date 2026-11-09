@@ -6,6 +6,7 @@ reasoning and abstention contribute to scientific claim verification.
 See [Windows setup and demo](docs/QUICKSTART.zh.md) for commands and
 [experiment protocol](docs/REPRODUCE.md) for splits, metrics and run order.
 See [local run results](docs/RESULTS.zh.md) for the measured seed-0 run.
+See [the sentence selection audit](docs/SELECTION_STUDY.zh.md) for the C1–C2 comparison and the optional empty-evidence rule.
 See [project status in Chinese](docs/STATUS.zh.md) for the completed and pending work.
 See [course concept mapping in Chinese](docs/COURSE_MAP.zh.md) for the methods behind each experiment.
 The browser demo reads the checked-in prediction cache and does not load a model.

@@ -48,7 +48,10 @@ def train(config, train_file: Path, output_dir: Path, seed: int, smoke_test=Fals
         raise RuntimeError("QLoRA requires a CUDA-enabled PyTorch installation")
     reader = config["reader"]
     train_cfg, lora, quant = reader["train"], reader["lora"], reader["quant"]
-    dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    bf16_supported = torch.cuda.is_bf16_supported()
+    if not quant["load_in_4bit"] and not bf16_supported:
+        raise RuntimeError("The bf16 LoRA ablation requires native bfloat16 support")
+    dtype = torch.bfloat16 if bf16_supported else torch.float16
     kwargs = {"device_map": {"": 0}, "torch_dtype": dtype, "low_cpu_mem_usage": True}
     if quant["load_in_4bit"]:
         kwargs["quantization_config"] = BitsAndBytesConfig(

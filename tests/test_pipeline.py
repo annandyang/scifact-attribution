@@ -87,6 +87,23 @@ class TestPipeline(unittest.TestCase):
         self.assertLessEqual(len(docs), 3)
         self.assertLessEqual(len(row["selected_ids"]), 4)
 
+    def test_optional_evidence_rule_skips_model_only_for_empty_context(self):
+        ctx = self._context("c2")
+        ctx.config["require_evidence"] = True
+        empty = ("prompt", [], [], 0.0, 0.0)
+        row = run_claim(CLAIM, ctx, reader=object(), prepared=empty)
+        self.assertEqual(row["pred_label"], "NEI")
+        self.assertEqual(row["prediction_source"], "empty_evidence_rule")
+
+        class Reader:
+            def score_labels(self, prompt):
+                return {"SUPPORT": 0.1, "REFUTE": 0.8, "NOT_ENOUGH_INFO": 0.1}
+
+        row = run_claim(CLAIM, ctx, reader=Reader())
+        self.assertTrue(row["selected_ids"])
+        self.assertEqual(row["pred_label"], "REFUTE")
+        self.assertNotIn("prediction_source", row)
+
     def test_selector_cap_is_enforced(self):
         candidates = [{"doc_id": 1, "sent_idx": i, "text": f"s{i}"} for i in range(6)]
         chosen = select([1.0, 0.9, 0.8, 0.7, 0.6, 0.5], candidates, top_n=4, max_per_doc=2)

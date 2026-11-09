@@ -81,6 +81,9 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="no model; exercises the pipeline")
     parser.add_argument("--out", default=None)
     parser.add_argument("--adapter-base", help="adapter path before the _sSEED suffix; requires --out")
+    parser.add_argument("--precision", choices=("qlora", "bf16_lora"), default="qlora")
+    parser.add_argument("--require-evidence", action="store_true",
+                        help="C2 only: return NEI for an empty selection; requires --out")
     parser.add_argument("--smoke-adapter", action="store_true", help="load the separate smoke adapter")
     args = parser.parse_args()
 
@@ -95,6 +98,14 @@ def main() -> int:
         parser.error("--adapter-base requires --out")
     if args.adapter_base:
         cfg["adapter_path"] = args.adapter_base
+    if args.precision == "bf16_lora":
+        if not args.adapter_base or not args.out or args.dry_run or not cfg["components"].get("adapter"):
+            parser.error("bf16_lora requires a real adapter condition, --adapter-base and --out")
+        cfg["reader"]["quant"]["load_in_4bit"] = False
+    if args.require_evidence:
+        if cfg["condition"] != "c2" or not args.out or args.dry_run:
+            parser.error("--require-evidence requires real C2 inference and --out")
+        cfg["require_evidence"] = True
     processed = cfg["paths"]["processed"]
     indexes = cfg["paths"]["indexes"]
     predictions = cfg["paths"]["predictions"]
@@ -105,6 +116,12 @@ def main() -> int:
         predictions = predictions / "open" / open_scope
     elif args.exact_index:
         parser.error("--exact-index applies only to SciFact-Open")
+    if args.require_evidence or args.precision != "qlora":
+        canonical = predictions / f"{cfg['condition']}_{args.split}.jsonl"
+        out_path = Path(args.out)
+        if (out_path.resolve() == canonical.resolve()
+                or out_path.with_suffix(".meta.json").resolve() == canonical.with_suffix(".meta.json").resolve()):
+            parser.error("An experimental option cannot overwrite the original condition cache.")
 
     claims = load_jsonl_as_list(processed / f"claims_{args.split}.jsonl")
     if args.limit:
@@ -205,6 +222,8 @@ def main() -> int:
         "wall_clock_s": round(elapsed, 1),
         "sec_per_claim": round(elapsed / max(n, 1), 2),
         "components": cfg["components"],
+        **({"reader_precision": args.precision} if args.adapter_base else {}),
+        **({"require_evidence": True} if args.require_evidence else {}),
     }
     with open(out.with_suffix(".meta.json"), "w", encoding="utf-8") as fh:
         json.dump(meta, fh, indent=2)

@@ -5,6 +5,7 @@ param(
     [string]$Seeds = "0",
     [switch]$SkipE1,
     [switch]$WithPerturbation,
+    [switch]$FullPrecisionGrid,
     [int]$Port = 7860
 )
 
@@ -63,7 +64,15 @@ try {
             Run scripts/05_train_lora.py --condition c3 --rank $rank --seeds $Seeds
             Run scripts/04_run_condition.py --condition c3 --seeds $Seeds --adapter-base "outputs/adapters/lora_r16_r$($rank)_qlora" --out "outputs/predictions/rank$($rank)_dev.jsonl"
         }
-        Run scripts/08_report_tables.py --split dev --conditions "rank8,c3,rank32" --tag ablation
+        $conditions = 'rank8,c3,rank32'
+        if ($FullPrecisionGrid) {
+            foreach ($rank in 8,16,32) {
+                Run scripts/05_train_lora.py --condition c3 --rank $rank --seeds $Seeds --precision bf16_lora
+                Run scripts/04_run_condition.py --condition c3 --seeds $Seeds --precision bf16_lora --adapter-base "outputs/adapters/lora_r16_r${rank}_bf16_lora" --out "outputs/predictions/bf16_r${rank}_dev.jsonl"
+            }
+            $conditions += ',bf16_r8,bf16_r16,bf16_r32'
+        }
+        Run scripts/08_report_tables.py --split dev --conditions $conditions --tag ablation
         return
     }
     $split = $Stage.ToLowerInvariant()

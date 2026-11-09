@@ -13,6 +13,8 @@ outputs/figures/*
 # keep the metric tables: they are small and they are the audit trail
 !outputs/tables/*.csv
 !outputs/tables/*.md
+outputs/tables/e2_*.jsonl
+outputs/tables/e6_open_bm25_c3.jsonl
 
 # python
 __pycache__/

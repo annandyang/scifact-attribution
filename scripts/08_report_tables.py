@@ -24,6 +24,10 @@ from scifact_attr.utils.io import get_logger, load_jsonl_as_list
 
 LOG = get_logger("tables")
 ORDER = ["c0", "c1", "c2", "c3", "c4", "c5", "c3_prime"]
+ABLATION_ADAPTERS = {
+    "rank8": "lora_r16_r8_qlora", "c3": "lora_r16", "rank32": "lora_r16_r32_qlora",
+    **{f"bf16_r{rank}": f"lora_r16_r{rank}_bf16_lora" for rank in (8, 16, 32)},
+}
 NAMES = {
     "c0": "closed book",
     "c1": "+ retrieval",
@@ -65,7 +69,7 @@ def evidence_metrics(condition, rows):
             retrieved = {str(doc) for doc in row.get("retrieved_ids", [])[:8]}
             hits += bool(gold_docs & retrieved)
         results["retrieval_hit_at_8"] = hits / len(annotated)
-    if condition in ("c2", "c3", "c4", "c5", "c3_prime"):
+    if condition in ("c2", "c3", "c4", "c5", "c3_prime") or condition in ABLATION_ADAPTERS:
         recalls = [
             citation_metrics(row.get("selected_ids", [])[:8], row["gold_sentence_ids"])["recall"]
             for row in annotated
@@ -121,6 +125,9 @@ def compare_runs(loaded, shared, resamples):
     rows = []
     pairs = list(zip(ORDER[:4], ORDER[1:5])) + [
         ("c3", name) for name in ("c3_prime", "rank8", "rank32", "bf16_r16")
+    ] + [
+        ("rank8", "bf16_r8"), ("rank32", "bf16_r32"),
+        ("bf16_r16", "bf16_r8"), ("bf16_r16", "bf16_r32"),
     ]
     for before, after in pairs:
         if before not in loaded or after not in loaded:
@@ -176,7 +183,7 @@ def main():
     parser.add_argument("--tag", choices=("ablation",), help="keep separate tables for E7")
     args = parser.parse_args()
     requested = {name.strip() for name in args.conditions.split(",")}
-    order = ("rank8", "c3", "rank32", "bf16_r16") if args.tag else ORDER
+    order = ABLATION_ADAPTERS if args.tag else ORDER
     if requested - set(order) or args.resamples < 1:
         parser.error("Use known conditions and a positive resample count.")
     cfg = load_base()
@@ -234,14 +241,19 @@ def main():
     if args.tag == "ablation":
         if set(loaded) != requested:
             raise SystemExit("Run every requested adapter condition before generating the ablation table.")
+        if set(shared) != evaluation_ids:
+            raise SystemExit("Every adapter comparison needs the complete held-out evaluation split.")
         if len({frozenset(runs) for runs in loaded.values()}) != 1:
             raise SystemExit("Adapter comparisons require the same seeds for every rank.")
-        adapter_names = {"rank8": "lora_r16_r8_qlora", "c3": "lora_r16",
-                         "rank32": "lora_r16_r32_qlora", "bf16_r16": "lora_r16_r16_bf16_lora"}
         for row in rows:
-            adapter = adapter_names[row["condition"]]
+            adapter = ABLATION_ADAPTERS[row["condition"]]
             path = predictions.parent / "adapters" / f"{adapter}_s{row['seed']}" / "train_meta.json"
-            meta = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            if not path.is_file():
+                raise SystemExit(f"Missing training metrics: {path}")
+            meta = json.loads(path.read_text(encoding="utf-8"))
+            if (meta.get("smoke_test") or meta.get("training_config") != cfg["reader"]["train"]
+                    or meta.get("load_in_4bit") != (not row["condition"].startswith("bf16_"))):
+                raise SystemExit(f"Incompatible training settings: {path}")
             row["training_seconds"] = meta.get("metrics", {}).get("train_runtime")
             row["training_peak_gib"] = meta.get("peak_mem_gb")
     comparisons = compare_runs(loaded, shared, args.resamples)

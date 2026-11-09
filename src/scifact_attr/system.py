@@ -161,6 +161,7 @@ def run_claim(claim: Dict[str, Any], ctx: RunContext, reader: Any, seed: int = 0
     cited: List[str] = []
     status = "ok"
     raw = ""
+    empty_evidence = bool(cfg.get("require_evidence") and components.get("selection") and not selected)
 
     if reader is None:
         # dry run: exercises the pipeline without a model (used by --dry-run and by tests)
@@ -168,6 +169,10 @@ def run_claim(claim: Dict[str, Any], ctx: RunContext, reader: Any, seed: int = 0
         pred_prob = 1.0 / 3.0
         probs = {"SUPPORT": 1 / 3, "REFUTE": 1 / 3, "NEI": 1 / 3}
         status = "dry_run"
+    elif empty_evidence:
+        pred_label = "NEI"
+        pred_prob = 1.0
+        probs = {"SUPPORT": 0.0, "REFUTE": 0.0, "NEI": 1.0}
     elif components.get("reasoning"):
         raw = generated if generated is not None else generate_assessments(
             reader, [(prompt, selected)], cfg["reader"]["gen"]
@@ -215,6 +220,7 @@ def run_claim(claim: Dict[str, Any], ctx: RunContext, reader: Any, seed: int = 0
         "rationale": rationale,
         "raw_output": raw,
         "status": status,
+        **({"prediction_source": "empty_evidence_rule"} if empty_evidence and reader else {}),
         "latency_ms": int((preparation_time + generation_time + time.perf_counter() - started) * 1000),
         "peak_mem_mb": 0,
     }
