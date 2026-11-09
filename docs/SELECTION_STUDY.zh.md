@@ -52,6 +52,12 @@
 
 C3 微调模型在校准组选择了 `wide8`（宏平均 F1：0.589，原规则 0.561）。留出组完整参考证据从 48/91 增至 62/91，但两组都答对 97/150（64.7%，配对差值 95% 区间 −3.3 到 +3.3 个百分点）。宏平均 F1 从 0.628 变为 0.623。没有足够证据说明这个改动能提高判定能力，C3 仍保留原配置。[C3 运行记录](../outputs/tables/e2_selection_c3.json)
 
+另做了一项固定证据的提示对照：明确要求模型区分“讨论同一主题”和“有直接支持或反驳的证据”。校准组宏平均 F1 从 0.561 到 0.575，但留出组仍答对 97/150，NEI F1 仍为 0.565。这个改动没有解决 NEI 问题，原提示保留。[提示对照记录](../outputs/tables/e2_c3_sufficiency_prompt.json)
+
+```powershell
+& $py scripts/14_selection_study.py --condition c3 --clarify-evidence --out outputs/tables/e2_c3_sufficiency_prompt
+```
+
 ## 英文报告表述
 
 On the held-out SciFact development subset, replacing retrieved abstract excerpts with up to four selected sentences reduced accuracy from 56.0% to 47.3%. Document rankings were identical. Among the 91 claims with annotated evidence, the abstract condition presented at least one complete annotated evidence set for 81 claims; sentence selection reduced this number to 48. Some predictions remained incorrect even when a complete set was preserved, so the difference also reflects how the reader uses the available context.

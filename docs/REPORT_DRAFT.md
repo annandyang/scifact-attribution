@@ -30,6 +30,8 @@ C1 and C2 retrieved identical document rankings. Of 91 evaluation claims with an
 
 We then tested changes to the selector and to empty-context handling. Removing the selector score cutoff raised C2 accuracy to 56.7%. A separate cached replay that returned NOT_ENOUGH_INFO when C2 selected no evidence raised accuracy to 58.7%, with macro-F1 of 0.436, below C1's 0.449. For the adapted C3 reader, a wider selector increased complete evidence from 48 to 62 evaluation claims without changing the number of correct verdicts (97/150). These are follow-up diagnostics on a previously used development split. [Selection audit and replay](SELECTION_STUDY.zh.md)
 
+With the C3 evidence and adapter held fixed, clarifying that topical relevance alone does not justify a verdict improved calibration macro-F1 but left evaluation accuracy and NOT_ENOUGH_INFO F1 unchanged. We retained the original prompt. [Prompt comparison](../outputs/tables/e2_c3_sufficiency_prompt.json)
+
 ## Shortcuts, citations, and abstention
 
 All 304 NOT_ENOUGH_INFO training claims had empty annotated evidence, while none of the 505 SUPPORT and REFUTE claims did. The C3-prime control gave NOT_ENOUGH_INFO examples retrieved distractors. Its macro-F1 fell from 0.628 to 0.445, showing sensitivity to the training input pattern. Some distractors may still be relevant, so the full difference cannot be assigned to a single shortcut. [Shortcut audit](../outputs/tables/e3_shortcut.md)
@@ -41,5 +43,9 @@ C5 uses a conformal label set calibrated on separate claims and answers only whe
 ## Transfer and limitations
 
 Using the same 206 evidence-bearing [SciFact-Open](https://aclanthology.org/2022.findings-emnlp.347/) claims, BM25 found at least one annotated document in the top eight for 176 claims in the original 5,183-document corpus and 152 in the full 500,000-document corpus. This isolates the retrieval stage. The pooled relevance annotations are not exhaustive, and the two corpora also differ in composition. [Transfer retrieval report](../outputs/tables/e6_open_retrieval.zh.md)
+
+With the same C3 adapter downstream of BM25, accuracy was similar on the 264 claims with a single reference label: 153/264 on the small corpus and 154/264 on the full corpus. Macro-F1 fell from 0.550 to 0.498. The number of correct NOT_ENOUGH_INFO verdicts fell from 23 to 7 of 73. Every correct verdict for that class came from an empty selection, consistent with the training cue identified in the shortcut audit. [Transfer verdicts](../outputs/tables/e6_open_transfer.zh.md)
+
+The frozen hybrid retriever was also evaluated on the official 12,236-document candidate pool. With C3, accuracy was 58.3% on the small corpus and 59.8% on the candidate pool, while macro-F1 moved from 0.540 to 0.508. None of the paired accuracy differences for C1–C4 excluded zero. This experiment does not substitute for hybrid retrieval over all 500,000 documents. [Candidate-pool comparison](../outputs/tables/e6_transfer_candidates.csv)
 
 The comparison separates aggregate classification accuracy from evidence retention and abstention. More evidence did not always yield more correct verdicts, and an explanation did not always improve the label. The final course report should give the per-seed measurements, identify which transfer and adapter ablations were completed, and keep AI-assisted error examples separate from independent human coding. [Current project status](STATUS.zh.md)

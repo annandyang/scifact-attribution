@@ -38,3 +38,20 @@ class SelectionStudyTests(unittest.TestCase):
             study.load_predictions([prediction, prediction], [claim], "c1", 0)
         with self.assertRaisesRegex(ValueError, "Retrieval differs"):
             study.require_same_retrieval(10, prediction, {**prediction, "retrieved_ids": [3, 2]})
+
+    def test_clarification_scores_the_same_evidence_with_a_different_prompt(self):
+        claim = {"claim_id": 1, "claim": "A causes B.", "label": "NEI"}
+        old = {1: {"retrieved_ids": [10], "selected_ids": ["10#0"], "pred_label": "SUPPORT"}}
+        docs = {10: [{"doc_id": 10, "sent_idx": 0, "text": "A was observed."}]}
+
+        class Reader:
+            def score_labels(self, prompt):
+                if "same topic" in prompt:
+                    return {"NOT_ENOUGH_INFO": 1.0}
+                return {"SUPPORT": 1.0}
+
+        results = study.run_part([claim], ("original", "clarify"), old, docs, None,
+                                 Reader(), study.load_condition("c3"), "calibration")
+        original, clarified = results["original"][0], results["clarify"][0]
+        self.assertEqual(original["selected_ids"], clarified["selected_ids"])
+        self.assertEqual((original["pred_label"], clarified["pred_label"]), ("SUPPORT", "NEI"))

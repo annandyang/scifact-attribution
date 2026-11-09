@@ -1,0 +1,35 @@
+[
+  {
+    "seed": 0,
+    "training_seed": 42,
+    "examples": 809,
+    "epochs": 3.0,
+    "rank": 16,
+    "precision": "qlora",
+    "training_seconds": 1242.8645,
+    "peak_memory_gib": 2.384,
+    "adapter_sha256": "545193059df2b7e7998248adab97f7a8e510a96492f9ca4239e3be8b4d461760"
+  },
+  {
+    "seed": 1,
+    "training_seed": 43,
+    "examples": 809,
+    "epochs": 3.0,
+    "rank": 16,
+    "precision": "qlora",
+    "training_seconds": 1211.9217,
+    "peak_memory_gib": 2.384,
+    "adapter_sha256": "e7f8560b3a860324fbf367b5691ad29de098568123b777c5f161179135c6fb52"
+  },
+  {
+    "seed": 2,
+    "training_seed": 44,
+    "examples": 809,
+    "epochs": 3.0,
+    "rank": 16,
+    "precision": "qlora",
+    "training_seconds": 1212.2097,
+    "peak_memory_gib": 2.384,
+    "adapter_sha256": "9daf84adb8534aaabfec6ec158e15d244574fe78a840e9b83d13e6edd0ba1d04"
+  }
+]

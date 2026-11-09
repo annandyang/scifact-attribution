@@ -1,0 +1,73 @@
+{
+  "condition": "c3",
+  "seed": 0,
+  "retriever": "bm25",
+  "reader_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "selector_revision": "2cfc18c9415c912f9d8155881c133215df768a70",
+  "adapter_sha256": "545193059df2b7e7998248adab97f7a8e510a96492f9ca4239e3be8b4d461760",
+  "claims_sha256": "827c336f2a1b78465204102366988061186e3c94c4aac41e2c637b1de3ff133f",
+  "ranking_sha256": {
+    "small": "68a0803bdf0e279955059a76569faa80f57373e887c9a5d69ab88e6f4a4945fa",
+    "full": "36750e20e14afea12fe3fc5ea2608234989e0b2b97c1c339513fc169a0ee3a7b"
+  },
+  "small": {
+    "labeled_claims": 264,
+    "accuracy": 0.5795454545454546,
+    "macro_f1": 0.5495425763898861,
+    "f1_by_label": {
+      "SUPPORT": 0.6638655462184874,
+      "REFUTE": 0.6107784431137725,
+      "NEI": 0.37398373983739835
+    },
+    "correct_by_label": {
+      "SUPPORT": 79,
+      "REFUTE": 51,
+      "NEI": 23
+    },
+    "count_by_label": {
+      "SUPPORT": 101,
+      "REFUTE": 90,
+      "NEI": 73
+    },
+    "empty_context_on_nei": 23,
+    "correct_nei_with_context": 0,
+    "hit_at_8": 0.8543689320388349,
+    "retrieval_hits": 176,
+    "evidence_claims": 206
+  },
+  "full": {
+    "labeled_claims": 264,
+    "accuracy": 0.5833333333333334,
+    "macro_f1": 0.49840626068762955,
+    "f1_by_label": {
+      "SUPPORT": 0.6768060836501901,
+      "REFUTE": 0.6628571428571428,
+      "NEI": 0.15555555555555556
+    },
+    "correct_by_label": {
+      "SUPPORT": 89,
+      "REFUTE": 58,
+      "NEI": 7
+    },
+    "count_by_label": {
+      "SUPPORT": 101,
+      "REFUTE": 90,
+      "NEI": 73
+    },
+    "empty_context_on_nei": 7,
+    "correct_nei_with_context": 0,
+    "hit_at_8": 0.7378640776699029,
+    "retrieval_hits": 152,
+    "evidence_claims": 206
+  },
+  "paired_full_minus_small": {
+    "delta": 0.003787878787878788,
+    "ci_low": -0.056818181818181816,
+    "ci_high": 0.06439393939393939,
+    "n": 264.0
+  },
+  "paired_correctness": {
+    "gains": 33,
+    "losses": 32
+  }
+}

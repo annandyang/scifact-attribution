@@ -170,7 +170,7 @@ def main():
     report.extend(["Reproduce after running C1 and C2 on dev with `python scripts/13_audit_selection.py`.", ""])
     markdown = "\n".join(report)
     if args.output:
-        args.output.write_text(markdown, encoding="utf-8")
+        args.output.write_text(markdown, encoding="utf-8", newline="\n")
     else:
         print(markdown, end="")
 

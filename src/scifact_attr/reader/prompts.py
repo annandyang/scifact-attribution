@@ -19,6 +19,16 @@ with one label only: SUPPORT, REFUTE, or NOT_ENOUGH_INFO.
 Claim: {claim}
 Label:"""
 
+GROUNDED_WITH_DEFINITIONS = """You are a scientific claim verifier. Use only the evidence below.
+Choose SUPPORT if it directly supports the claim, REFUTE if it directly contradicts
+the claim, or NOT_ENOUGH_INFO if it does neither, even if it discusses the same topic.
+Answer with one label only.
+
+{context}
+
+Claim: {claim}
+Label:"""
+
 COT_WITH_CITATIONS = """Compare the claim with the numbered evidence sentences.
 
 {context}
@@ -32,6 +42,7 @@ If no sentence addresses the claim, write "No relevant evidence." """
 TEMPLATES = {
     "closed_book": CLOSED_BOOK,
     "grounded_label_only": GROUNDED_LABEL_ONLY,
+    "grounded_with_definitions": GROUNDED_WITH_DEFINITIONS,
     "cot_with_citations": COT_WITH_CITATIONS,
 }
 

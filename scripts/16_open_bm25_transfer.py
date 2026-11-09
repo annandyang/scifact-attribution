@@ -8,9 +8,10 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from scifact_attr import LABELS
 from scifact_attr.config import adapter_dir, load_condition
 from scifact_attr.eval.bootstrap import paired_delta_ci
-from scifact_attr.eval.metrics import accuracy, macro_f1
+from scifact_attr.eval.metrics import accuracy, macro_f1, per_class_f1
 from scifact_attr.open_data import DiskSentences
 from scifact_attr.reader.infer import Reader
 from scifact_attr.retrieval.bm25 import FrozenBM25
@@ -38,6 +39,7 @@ def build_context(claims, rankings, corpus_path, cfg, selector):
 
 def summarize(claims, rows):
     annotated = hits = 0
+    empty_nei = nonempty_nei_correct = 0
     gold, predicted = [], []
     for claim, row in zip(claims, rows, strict=True):
         if claim["claim_id"] != row["claim_id"]:
@@ -48,8 +50,16 @@ def summarize(claims, rows):
         if claim["label"] is not None:
             gold.append(claim["label"])
             predicted.append(row["pred_label"])
+        if claim["label"] == "NEI":
+            empty_nei += not row["selected_ids"]
+            nonempty_nei_correct += bool(row["selected_ids"]) and row["pred_label"] == "NEI"
     return {"labeled_claims": len(gold), "accuracy": accuracy(gold, predicted),
-            "macro_f1": macro_f1(gold, predicted), "hit_at_8": hits / annotated,
+            "macro_f1": macro_f1(gold, predicted), "f1_by_label": per_class_f1(gold, predicted),
+            "correct_by_label": {label: sum(g == p == label for g, p in zip(gold, predicted))
+                                 for label in LABELS},
+            "count_by_label": {label: gold.count(label) for label in LABELS},
+            "empty_context_on_nei": empty_nei, "correct_nei_with_context": nonempty_nei_correct,
+            "hit_at_8": hits / annotated,
             "retrieval_hits": hits, "evidence_claims": annotated}, gold, predicted
 
 
@@ -104,6 +114,11 @@ def main():
         "adapter_sha256": adapter_hash, "claims_sha256": digest(args.open_claims),
         "ranking_sha256": {scope: digest(path) for scope, path in rankings.items()},
         **result, "paired_full_minus_small": paired_delta_ci(labels["small"], labels["full"], gold),
+    }
+    pairs = list(zip(labels["small"], labels["full"], gold, strict=True))
+    report["paired_correctness"] = {
+        "gains": sum(old != expected == new for old, new, expected in pairs),
+        "losses": sum(old == expected != new for old, new, expected in pairs),
     }
     write_jsonl(args.out.with_suffix(".jsonl"), trace)
     args.out.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
