@@ -5,7 +5,7 @@ reasoning and abstention contribute to scientific claim verification.
 
 See [Windows setup and demo](docs/QUICKSTART.zh.md) for commands and
 [experiment protocol](docs/REPRODUCE.md) for splits, metrics and run order.
-See [local run results](docs/RESULTS.zh.md) for the measured seed-0 run.
+See [local run results](docs/RESULTS.zh.md) for the original run and follow-up measurements.
 See [the sentence selection audit](docs/SELECTION_STUDY.zh.md) for the C1–C2 comparison and the optional empty-evidence rule.
 See [the English results draft](docs/REPORT_DRAFT.md) for the experiment rationale and measured results.
 See [project status in Chinese](docs/STATUS.zh.md) for the completed and pending work.

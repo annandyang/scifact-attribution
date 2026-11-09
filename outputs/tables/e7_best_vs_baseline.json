@@ -1,0 +1,14 @@
+{
+  "n": 150.0,
+  "baseline": "qlora_r16",
+  "variant": "bf16_r8",
+  "fixed": 4,
+  "regressed": 0,
+  "delta": 0.02666666666666667,
+  "ci_low": 0.006666666666666667,
+  "ci_high": 0.05333333333333334,
+  "b": 0.0,
+  "c": 4.0,
+  "p_value": 0.125,
+  "n_discordant": 4.0
+}

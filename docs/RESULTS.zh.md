@@ -54,3 +54,8 @@ C3′ 只改变 NEI 训练样本有没有证据文本。它的 NEI F1 为 0.371�
 C3 平均准确率为 64.9%，样本标准差 0.38 个百分点。C4 平均为 60.4%。把三组 C3 的标签概率取平均后，仍答对 97/150，没有改善。三个 C3 共同答错 50 条，其中 35 条的标注是 NEI。
 
 [三种子汇总](../outputs/tables/e2_multiseed_summary.json)、[训练记录](../outputs/tables/e2_multiseed_training.json)、[2,700 条复验轨迹](../outputs/tables/e2_multiseed_per_claim.csv)和[逐种子拒答结果](../outputs/tables/e5_conformal_multiseed.csv)独立保存。原始演示和阈值仍使用种子 0，待做工作见[进度表](STATUS.zh.md)。
+
+## 全库迁移和六档消融
+
+- [SciFact-Open 结果](../outputs/tables/e6_open_transfer.zh.md)：50 万篇库的混合检索文档命中从 87.4% 降至 77.2%。同一 C3 的准确率从 58.3% 到 57.6%，宏平均 F1 从 0.540 到 0.490。
+- [六档秩和精度结果](../outputs/tables/e7_ablation.zh.md)：BF16 秩 8 在种子 0 上答对 101/150（67.3%），比原 QLoRA 秩 16 多 4 题，尚未跨种子复验。

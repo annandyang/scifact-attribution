@@ -59,3 +59,8 @@ For each full Open hybrid inference run with retrieval enabled, pass
 `--frozen-bm25 "$open/rankings/bm25_full.jsonl"` to script 04. The ranking depth must
 match the hybrid candidate depth in the config. C0 does not use this argument.
 The frozen ranking file contains only these benchmark queries and cannot be used for new queries.
+
+The checked-in [transfer report](../outputs/tables/e6_open_transfer.zh.md) includes all
+six conditions on both Open scopes. A separate C3 run adds `--exact-index` and
+writes a different `--out` to measure the dense index approximation with the
+same corpus, sparse rankings, and adapter.

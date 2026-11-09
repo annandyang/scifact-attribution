@@ -1,0 +1,12 @@
+{
+  "gpu_inference": true,
+  "n_matched": 300,
+  "label_agreement_with_replay": 300,
+  "empty_context_rule_count": 50,
+  "calibration_correct": 86,
+  "evaluation_correct": 88,
+  "evaluation_n": 150,
+  "reader_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+  "original_predictions_sha256": "492e3fd580cc70bc0d93683cee9931b68955f17584fbb92397901ae75c30d391",
+  "live_predictions_sha256": "caf24d3feed2bc8dc2b5204203d06bbc24aef8bac1b1742f0b94440d047762f7"
+}

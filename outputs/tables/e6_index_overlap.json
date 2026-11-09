@@ -1,0 +1,6 @@
+{
+  "n_queries": 279,
+  "k": 8,
+  "nprobe": 32,
+  "approximate_overlap_with_exact": 0.5416666666666666
+}

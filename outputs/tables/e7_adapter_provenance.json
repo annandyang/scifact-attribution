@@ -1,0 +1,68 @@
+{
+  "rank8": {
+    "rank": 8,
+    "precision": "qlora",
+    "seed": 0,
+    "training_examples": 809,
+    "epochs": 3,
+    "train_seconds": 1234.3551,
+    "peak_training_gib": 2.229,
+    "adapter_sha256": "b967d8dd4a376adb4ca8ea4db2db83e908798c0e436eb24de67400851867be3f",
+    "predictions_sha256": "dc5305fc62b227e6e01e295e096d2c7fb1b007b5582305acf0ff23ba446bfba5"
+  },
+  "c3": {
+    "rank": 16,
+    "precision": "qlora",
+    "seed": 0,
+    "training_examples": 809,
+    "epochs": 3,
+    "train_seconds": 1242.8645,
+    "peak_training_gib": 2.384,
+    "adapter_sha256": "545193059df2b7e7998248adab97f7a8e510a96492f9ca4239e3be8b4d461760",
+    "predictions_sha256": "aa0489f2dc8711a8e4dd14574bdb28dd9335f62358d1ad9eff1181be71c44586"
+  },
+  "rank32": {
+    "rank": 32,
+    "precision": "qlora",
+    "seed": 0,
+    "training_examples": 809,
+    "epochs": 3,
+    "train_seconds": 1242.3591,
+    "peak_training_gib": 2.71,
+    "adapter_sha256": "e0e804b78722400999ad81a8257335a19b42f8ec65d6bd9e5d5ba862dcec00d8",
+    "predictions_sha256": "0c6b06fcfbc1202646707aeb0c84cec26ae53f5eed76d27d86d01a6fc8e2ea94"
+  },
+  "bf16_r8": {
+    "rank": 8,
+    "precision": "bf16_lora",
+    "seed": 0,
+    "training_examples": 809,
+    "epochs": 3,
+    "train_seconds": 879.0075,
+    "peak_training_gib": 3.311,
+    "adapter_sha256": "050ed1ae1703c68abdbdc94ccdf1cea4f0657daad68d8d631c148ad9a5853745",
+    "predictions_sha256": "1012805eb3e8916ce9e73b200052deed4682b01e6e1837951b70c405346a3802"
+  },
+  "bf16_r16": {
+    "rank": 16,
+    "precision": "bf16_lora",
+    "seed": 0,
+    "training_examples": 809,
+    "epochs": 3,
+    "train_seconds": 891.7827,
+    "peak_training_gib": 3.363,
+    "adapter_sha256": "8bc4099461f75732e66c27f89bacb6009e0ed04d093d737c4b5ae0c81e0eb9ed",
+    "predictions_sha256": "a152a75d578639d1d7d66f6633872fd6f64212326e910031a1cc64b32581f172"
+  },
+  "bf16_r32": {
+    "rank": 32,
+    "precision": "bf16_lora",
+    "seed": 0,
+    "training_examples": 809,
+    "epochs": 3,
+    "train_seconds": 891.568,
+    "peak_training_gib": 3.67,
+    "adapter_sha256": "d5bdd64fc31a327241013ced708428b8a79c88ca55507f4df6bf5a56432d37e9",
+    "predictions_sha256": "469e83baf9576939c8a56d55e6f4d7791b4b725a185058682ef70f68915a9d49"
+  }
+}
